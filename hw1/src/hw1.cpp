@@ -40,13 +40,46 @@ char getch()
   return (buf);
 }
 
+void move(double spd, double angspd, int c)
+{
+  vel_msg.linear.y = 0;
+  vel_msg.linear.z = 0;
+  vel_msg.angular.x = 0;
+  vel_msg.angular.y = 0;
+  switch (c)
+  {
+    case 97:
+      vel_msg.angular.z = abs(angspd);
+      vel_msg.linear.x = 0;
+      break;
+    case 119:
+      vel_msg.linear.x = abs(spd);
+      vel_msg.angular.z = 0;
+      break;
+    case 100:
+      vel_msg.angular.z = -abs(angspd);
+      vel_msg.linear.x = 0;
+      break;
+    case 115:
+      vel_msg.linear.x = -abs(spd);
+      vel_msg.angular.z = 0;
+      break;
+
+    
+  }
+   
+}
+
 void KeyboardControl()
 {
   int c = getch();
   if (c != EOF)
   {
-	std::cout<< "c variable"<< c <<std::endl;
+	  std::cout<< "c variable"<< c <<std::endl;
 	/*Please input your codes here*/
+    move(5.0, 5.0, c);
+
+    
   }
 }
 

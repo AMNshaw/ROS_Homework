@@ -76,6 +76,7 @@ void KeyboardControl()
   if (c != EOF)
   {
 	  std::cout<< "c variable"<< c <<std::endl;
+    std::cout<< "Press keyboard: w a s d." <<std::endl;
 	/*Please input your codes here*/
     move(5.0, 5.0, c);
 

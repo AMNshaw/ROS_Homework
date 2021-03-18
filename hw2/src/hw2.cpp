@@ -5,10 +5,15 @@
 #include <turtlesim/Pose.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Point.h>
-
+#include <time.h>
+#include <cstdio>
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <stdio.h>
 // include math 
 #include <math.h>
-
+#define PI = 3.1415926;
 using namespace std;
 
 turtlesim::Pose pose;
@@ -19,6 +24,8 @@ struct XYZ{
   float x;
   float y;
   float z;
+  float abs;
+  float theta;
 };
 //Declare a variable.Its name is pos_err with XYZ data type
 struct XYZ pos_err;
@@ -28,6 +35,33 @@ void pos_cb(const turtlesim::Pose::ConstPtr& msg)
 {
   pose = *msg;
 } 
+
+
+void transfer(float &x, float &y, float theta )
+{
+  float tempx = x;
+  float tempy = y;
+
+  x = cos(theta) * tempx - sin(theta) * tempy ;
+  y = sin(theta) * tempx + cos(theta) * tempy ;
+}
+
+void control(double theta_trans)
+{
+   if (pos_err.abs > 2)
+    {
+      pos_err.abs = 2;
+    }
+    
+    vel_msg.linear.x = pos_err.abs;
+
+    vel_msg.angular.z = theta_trans;
+    cout << "vel.z : " <<vel_msg.angular.z<<endl;
+    
+    
+    
+}
+
 
 int main(int argc, char **argv)
 {
@@ -56,21 +90,29 @@ int main(int argc, char **argv)
     // Calculate position error(feedback term)
     pos_err.x = goal_point.x - pose.x;
     pos_err.y = goal_point.y - pose.y;
+    pos_err.abs = sqrt(pow(pos_err.x, 2) + pow(pos_err.y, 2));
+    transfer(pos_err.x, pos_err.y, -pose.theta);
+    float theta_trans = atan2(pos_err.y,pos_err.x);
+    cout << "theta_trans: " << theta_trans <<endl; 
+
+    control(theta_trans);
+    turtlesim_pub.publish(vel_msg);
+
     
+    
+
+    
+
     /*Your error-driven controller design
-     *-->
-     *
-     *
-     *
-     *
-     */
     /*vel_msg.linear.x = (Your control input design);
      *vel_msg.angular.z = (Your control input design);*/
-    turtlesim_pub.publish(vel_msg);
+
+   
 
     count ++;
     ros::spinOnce();
     loop_rate.sleep();
+
   }
   return 0;
 }

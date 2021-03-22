@@ -94,9 +94,9 @@ int main(int argc, char **argv)
         // Implement your code here
         Eigen::Quaterniond Q_point(0, world_point.x(), world_point.y(), world_point.z());
         Eigen::Quaterniond Pprime = QuadVecRot(Q_point, Q_tmp);
-        std::cout << "Self-Derived world point: " <<Pprime.coeffs().transpose() <<std::endl;
-
-        world_point = Q_tmp * world_point;
+        //std::cout << "Self-Derived world point: " <<Pprime.coeffs().transpose() <<std::endl;
+        world_point << Pprime.x(), Pprime.y(), Pprime.z();
+        //world_point = Q_tmp * world_point;
         count ++;
         std::cout << "Current point position " << world_point.transpose() << std::endl << std::endl;
 

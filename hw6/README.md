@@ -39,3 +39,5 @@ Deadline: 4/13
 <img src="https://github.com/Robotics-Aerial-Robots/Homework6/blob/master/Figures/plot.PNG" width="80%" height="40%">
 
 
+Homework video link down there:
+https://youtu.be/klmtGQpdz-k

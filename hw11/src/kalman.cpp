@@ -10,7 +10,7 @@ KalmanFilter::KalmanFilter(
   const Eigen::MatrixXd& C,
   const Eigen::MatrixXd& Q,
   const Eigen::MatrixXd& R,
-  const Eigen::MatrixXd& P)
+  const Eigen::MatrixXd& P )
   : A(A), B(B), C(C), Q(Q), R(R), P0(P),
   m(C.rows()), n(A.rows()), dt(dt), initialized(false),
   I(n, n), x_hat(n), x_hat_new(n)
@@ -45,6 +45,18 @@ void KalmanFilter::update(const Eigen::VectorXd& y) {
 //Please refer the page 20 in week_12 kf ptt.
 //x_hat_new is prediction(x_k)
 //x_hat is correction(x_k-1)
+
+//Prediction
+  x_hat_new = A*x_hat + B*2;
+  P = A*P*A.transpose() + Q;
+
+//Correction
+  Eigen::VectorXd K_k = (P*C.transpose()).array() / (C*P*C.transpose() + R).array(); 
+  Eigen::VectorXd temp = (y-C*x_hat_new);
+  double j = temp(1);
+  x_hat_new = x_hat_new + K_k * j;
+  P = (I - K_k*C) * P;  
+
 
 //
   t += dt;

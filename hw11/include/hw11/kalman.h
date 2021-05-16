@@ -17,7 +17,7 @@ public:
 	KalmanFilter(
 		double dt,
 		const Eigen::MatrixXd& A,
-    const Eigen::MatrixXd& B,
+    	const Eigen::MatrixXd& B,
 		const Eigen::MatrixXd& C,
 		const Eigen::MatrixXd& Q,
 		const Eigen::MatrixXd& R,

@@ -27,6 +27,21 @@ int main(int argc, char **argv)
 
   // Please set parameter in this part and use the dynamic model parameter.
   // Discrete LTI projectile motion, measuring position only
+  A << 1, dt, 0,
+       0, 1, dt,
+       0, 0, 1;
+
+  B << 0, 0, 1;
+  C << 1, 0, 0;
+
+  Q << 400, 0.0, 0.0,
+       0.0, 0.1, 0.00,
+       0.0, 0.00, 0.01;
+  R << 1;
+
+  P << 1, 0, 0,
+       0, 1, 0,
+       0, 0, 1;
 
   //
 

@@ -5,6 +5,13 @@
 #include <Eigen/Dense>
 #include "hw11/kalman.h"
 
+#include <ros/ros.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <Eigen/Dense>
+#include "hw11/kalman.h"
+
 #include <queue>
 
 int main(int argc, char **argv)
@@ -32,6 +39,7 @@ int main(int argc, char **argv)
        0, 0, 1;
 
   B << 0, 0, 1;
+
   C << 1, 0, 0;
 
   Q << 400, 0.0, 0.0,
@@ -42,7 +50,6 @@ int main(int argc, char **argv)
   P << 1, 0, 0,
        0, 1, 0,
        0, 0, 1;
-
   //
 
   std::cout << "A: \n" << A << std::endl;
@@ -68,7 +75,7 @@ int main(int argc, char **argv)
   // Feed measurements into filter, output estimated states
   double t = 0;
   Eigen::VectorXd y(m);
-  std::cout << "t = " << t << ", " << "x_hat[0]: " << kf.state().transpose() << std::endl;
+  std::cout << "t = " << t << ", " << "x_hat[0]: " << std::endl <<kf.state().transpose() << std::endl;
   std::queue<double> answer;
   for (int i = 0; i < measurements.size(); i++) {
     t += dt;
@@ -83,7 +90,7 @@ int main(int argc, char **argv)
 
   std::ofstream in;
   //chage your path "home/ee405423/Desktop"
-  in.open("/home/ee405423/Desktop/data.csv",std::ios::out | std::ios::app);
+  in.open("/home/amnshaw/catkin_ws/src/Homework/hw11/src/data.csv",std::ios::out | std::ios::app);
   int len = answer.size();
   for(int i =0; i<len;i++)
   {

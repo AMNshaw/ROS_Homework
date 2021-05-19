@@ -49,16 +49,27 @@ void KalmanFilter::update(const Eigen::VectorXd& y) {
 //Prediction
   x_hat_new = A*x_hat + B*2;
   P = A*P*A.transpose() + Q;
-
+  std::cout << "x_hat pre " << std::endl << x_hat << std::endl;
+  std::cout << "P pre " << std::endl << P << std::endl;
 //Correction
-  Eigen::VectorXd K_k = (P*C.transpose()).array() / (C*P*C.transpose() + R).array(); 
+  Eigen::VectorXd K_k_1 = P*C.transpose();
+  Eigen::VectorXd K_k_2 = C*P*C.transpose() + R;
+  std::cout << "K_k_1" << std::endl << K_k_1 << std::endl;
+  std::cout << "K_k_2" << std::endl << K_k_2 << std::endl;
+  double K_k_c = K_k_2(0);
+  Eigen::VectorXd K_k = K_k_1/K_k_c;
+  //
+  std::cout << "K_k" << std::endl << K_k << std::endl;
+  //
   Eigen::VectorXd temp = (y-C*x_hat_new);
-  double j = temp(1);
+  double j = temp(0);
   x_hat_new = x_hat_new + K_k * j;
   P = (I - K_k*C) * P;  
-
-
-//
+  //
+  std::cout << "x_hat cor " << x_hat_new << std::endl;
+  std::cout << "P cor " << P << std::endl;
+  //
+  x_hat = x_hat_new;
   t += dt;
 }
 

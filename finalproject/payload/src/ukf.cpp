@@ -10,7 +10,7 @@ ukf::ukf(int state_size , int measurement_size){
   lambda = 0.0;
 
   L=x_size;
-  x_sigmavector_size = ?;
+  x_sigmavector_size = 2*x_size;////////////////////////////////////////////////
 
   lambda= alpha * alpha * (L + kappa) -L;
 
@@ -32,12 +32,12 @@ ukf::ukf(int state_size , int measurement_size){
   w_c.setZero(x_sigmavector_size);
   w_m.setZero(x_sigmavector_size);
 
-  w_c(0) = ?;
-  w_m(0) = ?;
+  w_c(0) = lambda/(lambda+L);//////////////////////////////////////////////////////
+  w_m(0) = lambda/((L+lambda)+(1-pow(alpha,2)+beta));///////////////////////////////////////////////////
 
   for(int i=1 ; i<x_sigmavector_size ; i++){
-    w_c(i) = ?;
-    w_m(i) = ?;
+    w_c(i) = 1/(2*(L+lambda));////////////////////////////////////////////////////////////
+    w_m(i) = 1/(2*(L+lambda));//////////////////////////////////////////////////////////
   }
 
   // default Q R P matrix
@@ -61,38 +61,38 @@ void ukf::predict(){
 
   for(int i=0;i<x_size;i++){
     Eigen::VectorXd sigma =(M.row(i)).transpose();
-    x_sigmavector.col(i+1) = ?;
-    x_sigmavector.col(i+x_size+1) = ?;
+    x_sigmavector.col(i+1) = x_sigmavector.col(0) + sigma;//////////////////////////////////////////////////////////////
+    x_sigmavector.col(i+x_size+1) = x_sigmavector.col(0) - sigma;/////////////////////////////////////////////////////////////
   }
 
   // process model
-  x_sigmavector = ?;
+  x_sigmavector = dynamics(x_sigmavector);/////////////////////////////////////////////
 
   //x_hat (mean)
   x_hat.setZero(x_size);   //initialize x_hat
 
   for(int i=0;i<x_sigmavector_size;i++){
-    x_hat += ?;
+    x_hat += w_m(i)*x_sigmavector(i);/////////////////////////////////////////////////////////
   }
   //covariance
   P_.setZero(x_size,x_size);
 
   for(int i=0 ; i<x_sigmavector_size ;i++){
-    P_+= ?;
+    P_ += w_c(i)*(x_sigmavector(i)-x_hat)*(x_sigmavector(i)-x_hat).transpose();
   }
 
   //add process noise covariance
   P_+= Q;
 
   // measurement model
-  y_sigmavector = ?;
+  y_sigmavector = C.transpose()*x_sigmavector;//////////////////////////////////////////////////////
 
 
   //y_hat (mean)
   y_hat.setZero(y_size);
 
   for(int i=0;i< x_sigmavector_size;i++){
-    y_hat += ?;
+    y_hat += w_m(i)*y_sigmavector(i);//////////////////////////////////////////////////////
   }
 }
 
@@ -107,10 +107,10 @@ void ukf::correct(Eigen::VectorXd measure){
     for(int i=0;i<x_sigmavector_size;i++){
       Eigen::MatrixXd y_err;
       Eigen::MatrixXd y_err_t;
-      y_err = ?;
+      y_err = y_sigmavector(i) - y_hat;//////////////////////////////////////////////////////////////
       y_err_t = y_err.transpose();
 
-      P_yy += ?;
+      P_yy += w_c(i)*(y_err*y_err_t);/////////////////////////////////////////////////////////
     }
 
     //add measurement noise covarinace
@@ -118,16 +118,16 @@ void ukf::correct(Eigen::VectorXd measure){
 
     for(int i=0;i<x_sigmavector_size;i++){
       Eigen::VectorXd y_err , x_err;
-      err_y = ?;
-      err_x = ?;
-      P_xy += ?;
+      y_err = y_sigmavector(i) - y_hat;//////////////////////////////////////////////
+      x_err = x_sigmavector(i) - x_hat;/////////////////////////////////////////
+      P_xy += w_c(i)*(x_err*y_err.transpose())?;///////////////////////////////////////////
     }
 
     Kalman_gain = ?;
 
     // correct states and covariance
-    x = ?;
-    P = ?;
+    x = x_hat+Kalman_gain*(y-y_hat);////////////////////////////////
+    P = P_+Kalman_gain*P_yy*Kalman_gain.transpose();//////////////////////////////////
 }
 
 Eigen::MatrixXd ukf::dynamics(Eigen::MatrixXd sigma_state){

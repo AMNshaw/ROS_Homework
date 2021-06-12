@@ -68,18 +68,13 @@ void ukf::predict(){
   }
 
   // process model
-  Eigen::MatrixXd:: acc;
-  acc.setZero(3,25);
-  acc << x_sigmavector(6),
-         x_sigmavector(7),
-         x_sigmavector(8);
 
-  x_sigmavector = M*(rotate(euler_angle)*acc)-rotate()*;/////////////////////////////////////////////??????????????????????????????
+  x_sigmavector = dynamics(x_sigmavector);/////////////////////////////////////////////
 
   //x_hat (mean)
   x_hat.setZero(x_size);   //initialize x_hat
   for(int i=0;i<x_sigmavector_size;i++){
-    x_hat += w_m(i)*x_sigmavector(i);
+    x_hat += w_m(i)*x_sigmavector(i);/////////////////////////////////////////////////////////
   }
 
   //covariance

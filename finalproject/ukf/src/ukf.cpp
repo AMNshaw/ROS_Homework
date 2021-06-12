@@ -74,17 +74,17 @@ void ukf::predict(){
   //x_hat (mean)
   x_hat.setZero(x_size);   //initialize x_hat
   for(int i=0;i<x_sigmavector_size;i++){
-    x_hat += w_m(i)*x_sigmavector(i);/////////////////////////////////////////////////////////
+    x_hat = x_hat + w_m(i)*x_sigmavector.col(i);/////////////////////////////////////////////////////////
   }
 
   //covariance
   P_.setZero(x_size,x_size);
 
   for(int i=0 ; i<x_sigmavector_size ;i++){
-    P_ += w_c(i)*(x_sigmavector(i)-x_hat)*(x_sigmavector(i)-x_hat).transpose();
+    P_ = P_ + w_c(i)*(x_sigmavector.col(i)-x_hat)*(x_sigmavector.col(i)-x_hat).transpose();////////////////////////
   }
   //add process noise covariance
-  P_ += Q;
+  P_+= Q;
 
   // measurement model
   y_sigmavector = C.transpose()*x_sigmavector;//////////////////////////////////////////////////////
@@ -93,7 +93,7 @@ void ukf::predict(){
   y_hat.setZero(y_size);
 
   for(int i=0;i< x_sigmavector_size;i++){
-    y_hat += w_m(i)*y_sigmavector(i);//////////////////////////////////////////////////////
+    y_hat = y_hat + w_m(i)*y_sigmavector.col(i);//////////////////////////////////////////////////////
   }
 }
 
@@ -145,7 +145,7 @@ void ukf::correct(Eigen::VectorXd measure){
   for(int i=0;i<x_sigmavector_size;i++){
     Eigen::MatrixXd y_err;
     Eigen::MatrixXd y_err_t;
-    y_err = y_sigmavector(i) - y_hat;//////////////////////////////////////////////////////////////
+    y_err = y_sigmavector.col(i) - y_hat;//////////////////////////////////////////////////////////////
     y_err_t = y_err.transpose();
 
     P_yy += w_c(i)*(y_err*y_err_t);/////////////////////////////////////////////////////////
@@ -156,12 +156,12 @@ void ukf::correct(Eigen::VectorXd measure){
 
   for(int i=0;i<x_sigmavector_size;i++){
     Eigen::VectorXd y_err , x_err;
-    y_err = y_sigmavector(i) - y_hat;//////////////////////////////////////////////
-    x_err = x_sigmavector(i) - x_hat;/////////////////////////////////////////
-    P_xy += w_c(i)*(x_err*y_err.transpose())?;///////////////////////////////////////////
+    y_err = y_sigmavector.col(i) - y_hat;//////////////////////////////////////////////
+    x_err = x_sigmavector.col(i) - x_hat;/////////////////////////////////////////
+    P_xy += w_c(i)*(x_err*y_err.transpose());///////////////////////////////////////////
   }
 
-  Kalman_gain = P_xy/P_yy;///////////////////////////////
+  Kalman_gain = P_xy.array()/P_yy.array();///////////////////////////////
 
   // correct states and covariance
   x = x_hat+Kalman_gain*(y-y_hat);////////////////////////////////

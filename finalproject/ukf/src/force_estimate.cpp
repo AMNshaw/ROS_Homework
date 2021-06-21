@@ -22,6 +22,7 @@
 
 #define l 0.25
 #define k 0.02
+
 std::string model_name;
 int drone_flag;
 forceest forceest1(statesize,measurementsize);
@@ -187,7 +188,6 @@ int main(int argc, char **argv){
     std::normal_distribution<double> disty(mean,stddev);
     std::normal_distribution<double> distz(mean,stddev);
     forceest1.gausian_noise << distx(generatorx), disty(generatory), distz(generatorz);
-
     pose.x = drone2_pose.pose.position.x;
 
     if(drone2_imu.angular_velocity.x != 0 && drone2_pose.pose.position.x != 0 && drone2_vel.twist.linear.x != 0){

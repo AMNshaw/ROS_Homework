@@ -2,16 +2,16 @@
 #include <tf/transform_datatypes.h>
 
 ukf::ukf(int state_size , int measurement_size){
+
   x_size = state_size;
   y_size = measurement_size;
   alpha = 1e-3;
   kappa = 0;
   beta = 2;
   lambda = -13;
-  C << 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0; 
 
   L = x_size;
-  x_sigmavector_size = 2*x_size;////////////////////////////////////////////////
+  x_sigmavector_size = 2*x_size+1;////////////////////////////////////////////////
 
   x.setZero(x_size);
   y.setZero(y_size);
@@ -31,14 +31,13 @@ ukf::ukf(int state_size , int measurement_size){
   w_c.setZero(x_sigmavector_size);
   w_m.setZero(x_sigmavector_size);
 
-  w_c(0) = lambda/(lambda+L);//////////////////////////////////////////////////////
-  w_m(0) = lambda/((L+lambda)+(1-pow(alpha,2)+beta));///////////////////////////////////////////////////
-
+  w_m(0) = lambda/(lambda+L);///////////////////////////////////////////////////
+  w_c(0) = lambda/(lambda+L)+(1-alpha*alpha+beta);//////////////////////////////////////////////////////
+  
   for(int i=1 ; i < x_sigmavector_size ; i++){
     w_c(i) = 1/(2*(L+lambda));////////////////////////////////////////////////////////////
     w_m(i) = 1/(2*(L+lambda));//////////////////////////////////////////////////////////
   }
-
   // default Q R P matrix
   Q = 5e-7*Eigen::MatrixXd::Identity(x_size, x_size);
   R = 5e-4*Eigen::MatrixXd::Identity(y_size, y_size);
@@ -49,52 +48,74 @@ ukf::ukf(int state_size , int measurement_size){
   P_xy.setZero(x_size,y_size);
 
   last_quat << 0,0,0,1;
+
+  /*  for(int i=0; i<2; i++)
+  {
+    std::cout << "w_m(" << i <<") " << w_m(i) << std::endl;
+    std::cout << "w_c(" << i <<") " << w_c(i) << std::endl;
+  }*/
 }
 
 //time update
 void ukf::predict(){
-
   //find sigma point
   P=(lambda+L)*P;
   Eigen::MatrixXd M = (P).llt().matrixL();
 
   x_sigmavector.setZero();
   x_sigmavector.col(0) = x;
-
   for(int i=0;i<x_size;i++){
     Eigen::VectorXd sigma = (M.row(i)).transpose();
-    x_sigmavector.col(i+1) = x_sigmavector.col(0) + sigma;//////////////////////////////////////////////////////////////
-    x_sigmavector.col(i+x_size+1) = x_sigmavector.col(0) - sigma;/////////////////////////////////////////////////////////////
+    x_sigmavector.col(i+1) = x_sigmavector.col(0) + (M.row(i)).transpose();//////////////////////////////////////////////////////////////
+    x_sigmavector.col(i+x_size+1) = x_sigmavector.col(0) - (M.row(i)).transpose();/////////////////////////////////////////////////////////////
   }
 
-  // process model
 
+  std::cout << "x(9) before " << std::endl << x_sigmavector.col(9) << std::endl;
+  //std::cout << "x(19) before " << std::endl << x_sigmavector.col(19) << std::endl;
+  //std::cout << "x(38) before " << std::endl << x_sigmavector.col(38) << std::endl;
+  // process model
   x_sigmavector = dynamics(x_sigmavector);/////////////////////////////////////////////
+
+  /*for(int i=0; i<x_sigmavector_size; i++)
+  {
+    std::cout << "x(i) after " << i << std::endl << x_sigmavector.col(i) << std::endl;
+  }*/
 
   //x_hat (mean)
   x_hat.setZero(x_size);   //initialize x_hat
   for(int i=0;i<x_sigmavector_size;i++){
+    
     x_hat = x_hat + w_m(i)*x_sigmavector.col(i);/////////////////////////////////////////////////////////
+    //std::cout << "x_hat_plus " << i << std::endl << x_hat << std::endl;
   }
 
   //covariance
   P_.setZero(x_size,x_size);
 
   for(int i=0 ; i<x_sigmavector_size ;i++){
-    P_ = P_ + w_c(i)*(x_sigmavector.col(i)-x_hat)*(x_sigmavector.col(i)-x_hat).transpose();////////////////////////
+    Eigen::MatrixXd x_err;
+    x_err = x_sigmavector.col(i)-x_hat;
+    P_ = P_ + w_c(i)*(x_err*x_err.transpose());////////////////////////
   }
   //add process noise covariance
   P_+= Q;
-
   // measurement model
-  y_sigmavector = C.transpose()*x_sigmavector;//////////////////////////////////////////////////////
-
+  y_sigmavector = H*x_sigmavector;//////////////////////////////////////////////////////
   //y_hat (mean)
   y_hat.setZero(y_size);
-
   for(int i=0;i< x_sigmavector_size;i++){
-    y_hat = y_hat + w_m(i)*y_sigmavector.col(i);//////////////////////////////////////////////////////
+    y_hat += w_m(i)*y_sigmavector.col(i);//////////////////////////////////////////////////////
   }
+
+  std::cout << "x(9) after " << std::endl << x_sigmavector.col(9) << std::endl;
+  //std::cout << "x(4) after " << std::endl << x_sigmavector.col(4) << std::endl;
+  //std::cout << "x(23) after " << std::endl << x_sigmavector.col(23) << std::endl;
+  //std::cout << "x_sigmavector.col(19) " << std::endl << x_sigmavector.col(19) << std::endl;
+  //std::cout << "x_sigmavector.col(38) " << std::endl << x_sigmavector.col(38) << std::endl;
+  std::cout << "x_hat1" << std::endl << x_hat << std::endl;
+  //std::cout << "y_hat1" << std::endl << y_hat << std::endl;
+
 }
 
 //measurement update
@@ -138,35 +159,41 @@ void ukf::correct(Eigen::VectorXd measure){
 
   //----------------
   y=measure;
-
   P_yy.setZero(y_size,y_size);
   P_xy.setZero(x_size,y_size);
 
   for(int i=0;i<x_sigmavector_size;i++){
     Eigen::MatrixXd y_err;
-    Eigen::MatrixXd y_err_t;
     y_err = y_sigmavector.col(i) - y_hat;//////////////////////////////////////////////////////////////
-    y_err_t = y_err.transpose();
-
-    P_yy += w_c(i)*(y_err*y_err_t);/////////////////////////////////////////////////////////
+    P_yy += w_c(i)*(y_err*y_err.transpose());/////////////////////////////////////////////////////////
   }
 
   //add measurement noise covarinace
   P_yy +=R;
-
+ //std::cout << "P_yy1" << std::endl << P_yy << std::endl;
   for(int i=0;i<x_sigmavector_size;i++){
     Eigen::VectorXd y_err , x_err;
+
     y_err = y_sigmavector.col(i) - y_hat;//////////////////////////////////////////////
     x_err = x_sigmavector.col(i) - x_hat;/////////////////////////////////////////
     P_xy += w_c(i)*(x_err*y_err.transpose());///////////////////////////////////////////
+    
+    //std::cout << "x_err" << std::endl << x_err << std::endl;
+    //std::cout << "y_err" << std::endl << y_err << std::endl;
+    //std::cout << "P_xy(i)" << std::endl << P_xy << std::endl;
   }
-
-  Kalman_gain = P_xy.array()/P_yy.array();///////////////////////////////
-
+  
+  Kalman_gain = P_xy * P_yy.inverse(); ///////////////////////////////
+  //std::cout << "P_xy1" << std::endl << P_xy << std::endl;
+  //std::cout << "Kal_1" << std::endl << Kalman_gain << std::endl;
   // correct states and covariance
-  x = x_hat+Kalman_gain*(y-y_hat);////////////////////////////////
-  P = P_+Kalman_gain*P_yy*Kalman_gain.transpose();//////////////////////////////////
+  x = x_hat + Kalman_gain*(y-y_hat);////////////////////////////////
 
+  
+  P = P_- Kalman_gain*P_yy*Kalman_gain.transpose();//////////////////////////////////
+
+  std::cout << "x correct" << std::endl << x << std::endl;
+  //std::cout << "P correct" << std::endl << P << std::endl;
   //----------------
   p_value = x[6]*x[6]+x[7]*x[7]+x[8]*x[8];
   p << x[6], x[7], x[8];

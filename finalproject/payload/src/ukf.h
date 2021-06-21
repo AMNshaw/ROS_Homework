@@ -46,7 +46,6 @@ private:
 
     Eigen::VectorXd w_c ; //weight c
     Eigen::VectorXd w_m ;  //weight m
-    Eigen::VectorXd C ;
 
     Eigen::MatrixXd x_a_sigmavector;
     Eigen::MatrixXd x_sigmavector ;
